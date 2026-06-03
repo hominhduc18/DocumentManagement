@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f9fafb;
+  --foreground: #111827;
+  --vnpt-blue: #0066cc;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-vnpt: var(--vnpt-blue);
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Segoe UI Mono", monospace;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+mark {
+  background-color: rgb(253 230 138 / 0.9);
+  color: inherit;
+}
