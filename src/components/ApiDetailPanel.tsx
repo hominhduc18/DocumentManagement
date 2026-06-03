@@ -50,6 +50,11 @@ export function ApiDetailPanel({
         <div className="flex items-start justify-between gap-3 border-b border-gray-200 px-5 py-4">
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex flex-wrap items-center gap-2">
+              {api.sectionNumber && (
+                <span className="inline-flex items-center rounded bg-blue-50 px-2 py-0.5 font-mono text-xs font-bold text-blue-700">
+                  {api.sectionNumber}
+                </span>
+              )}
               <h2 className="text-lg font-bold text-gray-900">
                 <HighlightText text={api.name} query={searchQuery} />
               </h2>

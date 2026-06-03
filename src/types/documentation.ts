@@ -15,6 +15,7 @@ export interface ResponseParam {
 export interface ApiDoc {
   id: string;
   serviceGroupId: string;
+  sectionNumber?: string;
   name: string;
   description: string;
   method: ApiMethod;

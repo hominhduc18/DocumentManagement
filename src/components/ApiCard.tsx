@@ -34,6 +34,11 @@ export function ApiCard({
         <MethodBadge method={api.method} />
         <div className="min-w-0 flex-1">
           <p className="font-semibold text-gray-900">
+            {api.sectionNumber && (
+              <span className="mr-1.5 inline-flex items-center rounded bg-blue-50 px-1.5 py-0.5 font-mono text-[11px] font-bold text-blue-700">
+                {api.sectionNumber}
+              </span>
+            )}
             <HighlightText text={api.name} query={searchQuery} />
           </p>
           <p className="truncate font-mono text-xs text-[#0066CC]">
@@ -58,6 +63,11 @@ export function ApiCard({
     >
       <div className="mb-3 flex items-start justify-between gap-2">
         <h3 className="font-semibold text-gray-900 leading-tight">
+          {api.sectionNumber && (
+            <span className="mr-1.5 inline-flex items-center rounded bg-blue-50 px-1.5 py-0.5 font-mono text-[11px] font-bold text-blue-700">
+              {api.sectionNumber}
+            </span>
+          )}
           <HighlightText text={api.name} query={searchQuery} />
         </h3>
         <MethodBadge method={api.method} />
