@@ -60,7 +60,7 @@ export const bhytDocumentation: VnptDocumentation = {
         { code: "username", message: "Tên đăng nhập" },
         { code: "expires_in", message: "Thời gian hết hạn token(UTC)" }
       ],
-      xmlTemplate: `// Content-Type: application/x-www-form-urlencoded\nusername=YOUR_USERNAME&password=YOUR_MD5_PASSWORD`
+      xmlTemplate: `username=79560_BV&password=72C974F09D6ACA02DE639132F6275F83`
     },
     {
       id: "ko-nhan-lich-su-kcb",
@@ -69,7 +69,7 @@ export const bhytDocumentation: VnptDocumentation = {
       name: "Dịch vụ tra cứu thẻ BHYT và Lịch sử KCB",
       description: "Dịch vụ nhận thông tin thẻ BHYT và lịch sử khám chữa bệnh 2024.",
       method: "POST",
-      endpoint: "https://egw.baohiemxahoi.gov.vn/api/egw/KQNhanLichSuKCB2024",
+      endpoint: "https://egw.baohiemxahoi.gov.vn/api/egw/KQNhanLichSuKCB2024?token={{access_token}}&id_token={{id_token}}&username={{username_tbadmin}}&password={{password_tb}}",
       requestParams: [
         { name: "maThe", type: "String", required: true, description: "Mã thẻ BHYT (Body)" },
         { name: "hoTen", type: "String", required: true, description: "Họ tên chủ thẻ BHYT (Body)" },

@@ -4,9 +4,10 @@ import { useState } from "react";
 import { HighlightText } from "@/components/HighlightText";
 import { MethodBadge } from "@/components/MethodBadge";
 import { XmlCodeBlock } from "@/components/XmlCodeBlock";
+import { ApiTester } from "@/components/ApiTester";
 import type { ApiDoc } from "@/types/documentation";
 
-type DetailTab = "params" | "response" | "xml";
+type DetailTab = "params" | "response" | "xml" | "test";
 
 export function ApiDetailPanel({
   api,
@@ -33,6 +34,7 @@ export function ApiDetailPanel({
     { id: "params", label: "Tham số đầu vào" },
     { id: "response", label: "Phản hồi" },
     { id: "xml", label: "XML Template" },
+    { id: "test", label: "Thử nghiệm" },
   ];
 
   return (
@@ -194,6 +196,12 @@ export function ApiDetailPanel({
                 )}
               </div>
               <XmlCodeBlock code={api.xmlTemplate} />
+            </div>
+          )}
+
+          {tab === "test" && (
+            <div className="py-2">
+              <ApiTester api={api} />
             </div>
           )}
         </div>
