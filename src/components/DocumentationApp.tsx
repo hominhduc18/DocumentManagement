@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { vnptDocumentation } from "@/data/vnptDocumentation";
+import { bhytDocumentation } from "@/data/BHYT";
 import { ApiCard } from "@/components/ApiCard";
 import { ApiDetailPanel } from "@/components/ApiDetailPanel";
 import { ErrorCodesView } from "@/components/ErrorCodesView";
@@ -17,7 +18,15 @@ import type {
 } from "@/types/documentation";
 
 export function DocumentationApp() {
-  const doc = vnptDocumentation;
+  const [docSource, setDocSource] = useState<"vnpt" | "bhyt">("vnpt");
+  const doc = docSource === "vnpt" ? vnptDocumentation : bhytDocumentation;
+
+  const handleDocSourceChange = (newSource: "vnpt" | "bhyt") => {
+    setDocSource(newSource);
+    setSelectedGroupId(null);
+    setSelectedApiId(null);
+    setSearchQuery("");
+  };
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
@@ -94,6 +103,8 @@ export function DocumentationApp() {
         doc={doc}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        docSource={docSource}
+        onDocSourceChange={handleDocSourceChange}
       />
 
       <div className="relative flex min-h-0 overflow-hidden">
