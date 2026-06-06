@@ -26,8 +26,8 @@ export function ApiCard({
       <button
         type="button"
         onClick={onClick}
-        className={`flex w-full items-center gap-4 rounded-lg border border-gray-200 bg-white px-4 py-3 text-left transition-all duration-200 hover:shadow-md ${
-          isSelected ? "ring-2 ring-[#0066CC]/40" : ""
+        className={`flex w-full items-center gap-4 rounded-lg border border-white/40 bg-white/50 backdrop-blur-md px-4 py-3 text-left transition-all duration-300 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] ${
+          isSelected ? "ring-2 ring-[#0066CC]/50 bg-white/70" : "hover:bg-white/60"
         }`}
         style={{ borderLeftWidth: 4, borderLeftColor: borderColor }}
       >
@@ -56,8 +56,8 @@ export function ApiCard({
     <button
       type="button"
       onClick={onClick}
-      className={`flex h-full flex-col rounded-xl border border-gray-200 bg-white p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg ${
-        isSelected ? "ring-2 ring-[#0066CC]/40" : ""
+      className={`flex h-full flex-col rounded-xl border border-white/40 bg-white/50 backdrop-blur-md p-4 text-left transition-all duration-300 hover:-translate-y-1 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] ${
+        isSelected ? "ring-2 ring-[#0066CC]/50 bg-white/70" : "hover:bg-white/60"
       }`}
       style={{ borderLeftWidth: 4, borderLeftColor: borderColor }}
     >

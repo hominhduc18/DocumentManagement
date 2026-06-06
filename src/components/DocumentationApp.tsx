@@ -98,7 +98,7 @@ export function DocumentationApp() {
   const methodButtons: MethodFilter[] = ["ALL", "POST", "GET"];
 
   return (
-    <div className="grid h-screen grid-rows-[auto_1fr] bg-gray-50">
+    <div className="grid h-screen grid-rows-[auto_1fr] bg-transparent">
       <Header
         doc={doc}
         searchQuery={searchQuery}
@@ -143,7 +143,7 @@ export function DocumentationApp() {
                   selectedApi ? "lg:max-w-[55%]" : ""
                 }`}
               >
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 py-3 lg:px-6">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/50 bg-white/40 backdrop-blur-md px-4 py-3 lg:px-6">
                   <div className="flex items-center gap-2">
                     <button
                       type="button"

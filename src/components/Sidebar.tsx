@@ -31,7 +31,7 @@ export function Sidebar({
   };
 
   return (
-    <aside className="flex h-full flex-col border-r border-gray-200 bg-gray-50/80">
+    <aside className="flex h-full flex-col border-r border-white/50 bg-white/40 backdrop-blur-md">
       <div className="border-b border-gray-200 p-4">
         <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
           Nhóm dịch vụ
