@@ -363,7 +363,7 @@ export const bhytDocumentation: VnptDocumentation = {
       name: "Dịch vụ kiểm tra lịch sử khám chữa bệnh",
       description: "Kiểm tra nhanh lịch sử khám chữa bệnh của bệnh nhân theo số thẻ BHYT hoặc mã số BHXH.",
       method: "POST",
-      endpoint: "https://egw.baohiemxahoi.gov.vn/api/his/checkLichSuKCB",
+      endpoint: "https://egw.baohiemxahoi.gov.vn/api/egw/checkLichSuKCB",
       requestParams: [
         { name: "Content-Type", type: "String", required: true, description: "application/json (Header)" },
         { name: "token", type: "String", required: true, description: "access_token lấy được từ mục 1.1 (Header)" },
@@ -388,7 +388,7 @@ export const bhytDocumentation: VnptDocumentation = {
       name: "Dịch vụ gửi hồ sơ chuyển tuyến",
       description: "Gửi thông tin giấy chuyển tuyến khi cơ sở KCB chuyển bệnh nhân đến cơ sở khác.",
       method: "POST",
-      endpoint: "https://egw.baohiemxahoi.gov.vn/api/his/sendHoSoChuyen",
+      endpoint: "https://egw.baohiemxahoi.gov.vn/api/egw/sendHoSoChuyen",
       requestParams: [
         { name: "Content-Type", type: "String", required: true, description: "application/json (Header)" },
         { name: "token", type: "String", required: true, description: "access_token lấy được từ mục 1.1 (Header)" },
@@ -414,7 +414,7 @@ export const bhytDocumentation: VnptDocumentation = {
       name: "Dịch vụ nhận hồ sơ chuyển tuyến",
       description: "Cơ sở KCB nhận thông tin giấy chuyển tuyến từ cơ sở khác gửi đến qua hệ thống BHXH.",
       method: "POST",
-      endpoint: "https://egw.baohiemxahoi.gov.vn/api/his/receiveHoSoChuyen",
+      endpoint: "https://egw.baohiemxahoi.gov.vn/api/egw/receiveHoSoChuyen",
       requestParams: [
         { name: "Content-Type", type: "String", required: true, description: "application/json (Header)" },
         { name: "token", type: "String", required: true, description: "access_token lấy được từ mục 1.1 (Header)" },
@@ -525,7 +525,7 @@ export const bhytDocumentation: VnptDocumentation = {
       name: "Dịch vụ nhận danh sách đợt giám định trong tháng",
       description: "Lấy danh sách các đợt giám định BHYT trong tháng của cơ sở KCB.",
       method: "POST",
-      endpoint: "https://egw.baohiemxahoi.gov.vn/api/his/KQDanhSachDotGiamDinh",
+      endpoint: "https://egw.baohiemxahoi.gov.vn/api/egw/KQDanhSachDotGiamDinh",
       requestParams: [
         { name: "Content-Type", type: "String", required: true, description: "application/json (Header)" },
         { name: "token", type: "String", required: true, description: "access_token lấy được từ mục 1.1 (Header)" },
@@ -554,7 +554,7 @@ export const bhytDocumentation: VnptDocumentation = {
       name: "Dịch vụ nhận kết quả giám định hồ sơ",
       description: "Lấy kết quả giám định chi tiết từng hồ sơ KCB của cơ sở theo đợt giám định.",
       method: "POST",
-      endpoint: "https://egw.baohiemxahoi.gov.vn/api/his/KQGiamDinhHoSo",
+      endpoint: "https://egw.baohiemxahoi.gov.vn/api/egw/KQGiamDinhHoSo",
       requestParams: [
         { name: "Content-Type", type: "String", required: true, description: "application/json (Header)" },
         { name: "token", type: "String", required: true, description: "access_token lấy được từ mục 1.1 (Header)" },
@@ -581,7 +581,7 @@ export const bhytDocumentation: VnptDocumentation = {
       name: "Dịch vụ nhận quyết toán tháng/quý",
       description: "Lấy kết quả quyết toán BHYT tháng hoặc quý của cơ sở KCB từ cơ quan BHXH.",
       method: "POST",
-      endpoint: "https://egw.baohiemxahoi.gov.vn/api/his/KQQuyetToan",
+      endpoint: "https://egw.baohiemxahoi.gov.vn/api/egw/KQQuyetToan",
       requestParams: [
         { name: "Content-Type", type: "String", required: true, description: "application/json (Header)" },
         { name: "token", type: "String", required: true, description: "access_token lấy được từ mục 1.1 (Header)" },
@@ -607,7 +607,7 @@ export const bhytDocumentation: VnptDocumentation = {
       serviceGroupId: "bhyt-web-service",
       sectionNumber: "5",
       name: "API tra lưu giấy khám sức khỏe",
-      description: "Để phần mềm HIS triển khai tại cơ sở y tế gửi dữ liệu khám sức khỏe lên Cổng tiếp nhận dữ liệu Hệ thống thông tin giám định BHYT",
+      description: "Để phần mềm egw triển khai tại cơ sở y tế gửi dữ liệu khám sức khỏe lên Cổng tiếp nhận dữ liệu Hệ thống thông tin giám định BHYT",
       method: "POST",
       endpoint: "https://egw.baohiemxahoi.gov.vn/api/hssk/gksk",
       requestParams: [
