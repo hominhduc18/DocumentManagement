@@ -45,7 +45,7 @@ export function ApiDetailPanel({
         aria-hidden
       />
       <aside
-        className="fixed inset-y-0 right-0 z-50 flex w-full max-w-xl flex-col border-l border-gray-200 bg-white shadow-2xl transition-transform duration-200 lg:static lg:z-auto lg:max-w-none lg:shadow-none"
+        className="fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-xl flex-col border-l border-gray-200 bg-white shadow-2xl transition-transform duration-200 lg:static lg:z-auto lg:max-w-none lg:shadow-none lg:h-full lg:overflow-hidden"
         role="dialog"
         aria-label={`Chi tiết API ${api.name}`}
       >

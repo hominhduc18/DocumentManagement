@@ -241,7 +241,7 @@ export function DocumentationApp() {
               </div>
 
               {selectedApi && (
-                <div className="hidden w-[45%] shrink-0 border-l border-gray-200 lg:flex lg:flex-col">
+                <div className="hidden w-[45%] shrink-0 min-h-0 overflow-hidden border-l border-gray-200 lg:flex lg:flex-col">
                   <ApiDetailPanel
                     api={selectedApi}
                     searchQuery={q}
