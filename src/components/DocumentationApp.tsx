@@ -35,6 +35,7 @@ export function DocumentationApp() {
   const [mainView, setMainView] = useState<MainView>("apis");
   const [selectedApiId, setSelectedApiId] = useState<string | null>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
 
   const q = normalizeSearch(searchQuery);
@@ -116,19 +117,24 @@ export function DocumentationApp() {
           />
         )}
         <div
-          className={`absolute inset-y-0 left-0 z-50 w-72 max-w-[85vw] shadow-xl transition-transform duration-200 lg:relative lg:z-auto lg:w-72 lg:max-w-none lg:translate-x-0 lg:shadow-none ${
-            mobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          className={`absolute inset-y-0 left-0 z-50 transition-all duration-300 ease-in-out lg:relative lg:z-auto lg:shadow-none ${
+            mobileSidebarOpen ? "translate-x-0 w-72 shadow-xl" : "-translate-x-full w-72 lg:translate-x-0"
+          } ${
+            isSidebarCollapsed ? "lg:w-0 lg:overflow-hidden lg:opacity-0" : "lg:w-72 lg:opacity-100"
           }`}
         >
-          <Sidebar
-            groups={doc.serviceGroups}
-            apiCounts={apiCounts}
-            selectedGroupId={selectedGroupId}
-            mainView={mainView}
-            onSelectGroup={setSelectedGroupId}
-            onSelectView={setMainView}
-            onCloseMobile={() => setMobileSidebarOpen(false)}
-          />
+          <div className="w-72 h-full">
+            <Sidebar
+              groups={doc.serviceGroups}
+              apiCounts={apiCounts}
+              selectedGroupId={selectedGroupId}
+              mainView={mainView}
+              onSelectGroup={setSelectedGroupId}
+              onSelectView={setMainView}
+              onCloseMobile={() => setMobileSidebarOpen(false)}
+              onToggleCollapse={() => setIsSidebarCollapsed(true)}
+            />
+          </div>
         </div>
 
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
@@ -147,8 +153,13 @@ export function DocumentationApp() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setMobileSidebarOpen(true)}
-                      className="rounded-lg border border-gray-200 p-2 text-gray-600 transition-all duration-200 hover:bg-gray-50 lg:hidden"
+                      onClick={() => {
+                        setMobileSidebarOpen(true);
+                        setIsSidebarCollapsed(false);
+                      }}
+                      className={`rounded-lg border border-gray-200 p-2 text-gray-600 transition-all duration-200 hover:bg-gray-50 ${
+                        isSidebarCollapsed ? "" : "lg:hidden"
+                      }`}
                       aria-label="Mở menu"
                     >
                       <MenuIcon />

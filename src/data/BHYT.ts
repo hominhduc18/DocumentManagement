@@ -605,7 +605,7 @@ export const bhytDocumentation: VnptDocumentation = {
     {
       id: "tra-luu-giay-kham-suc-khoe",
       serviceGroupId: "bhyt-web-service",
-      sectionNumber: "5",
+      sectionNumber: "5", 
       name: "API tra lưu giấy khám sức khỏe",
       description: "Để phần mềm egw triển khai tại cơ sở y tế gửi dữ liệu khám sức khỏe lên Cổng tiếp nhận dữ liệu Hệ thống thông tin giám định BHYT",
       method: "POST",

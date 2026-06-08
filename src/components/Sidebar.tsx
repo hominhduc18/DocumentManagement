@@ -10,6 +10,7 @@ export function Sidebar({
   onSelectGroup,
   onSelectView,
   onCloseMobile,
+  onToggleCollapse,
 }: {
   groups: ServiceGroup[];
   apiCounts: Record<string, number>;
@@ -18,6 +19,7 @@ export function Sidebar({
   onSelectGroup: (id: string | null) => void;
   onSelectView: (view: MainView) => void;
   onCloseMobile?: () => void;
+  onToggleCollapse?: () => void;
 }) {
   const handleGroup = (id: string | null) => {
     onSelectView("apis");
@@ -86,11 +88,11 @@ export function Sidebar({
           ))}
         </ul>
       </nav>
-      <div className="border-t border-gray-200 p-2">
+      <div className="border-t border-gray-200 p-2 flex gap-2">
         <button
           type="button"
           onClick={handleErrors}
-          className={`flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+          className={`flex-1 flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
             mainView === "errors"
               ? "bg-red-600 text-white shadow-sm"
               : "text-gray-700 hover:bg-white hover:shadow-sm"
@@ -112,6 +114,19 @@ export function Sidebar({
           </svg>
           Bảng mã lỗi
         </button>
+        {onToggleCollapse && (
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            className="hidden lg:flex items-center justify-center rounded-lg px-3 text-gray-500 hover:bg-white hover:text-gray-700 transition-colors border border-transparent hover:border-gray-200 hover:shadow-sm"
+            title="Thu nhỏ sidebar"
+            aria-label="Thu nhỏ sidebar"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
       </div>
     </aside>
   );
