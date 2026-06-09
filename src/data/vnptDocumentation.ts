@@ -4367,6 +4367,112 @@ export const vnptDocumentation = {
         { code: "Chuỗi hashValue", message: "Chuỗi trả về sử dụng để ký số SmartCA" }
       ],
       xmlTemplate: "N/A"
+    },
+    {
+      id: "get-mccqthue-from-no-to-no",
+      serviceGroupId: "mtt-service",
+      sectionNumber: "5.4.1",
+      name: "GetMCCQThueFromNoToNo",
+      description: "Lấy trạng thái và XMLData hóa đơn có mã, trạng thái của hóa đơn không mã gửi CQT trả về từ số - đến số (* tối đa 100 số hóa đơn).",
+      method: "GET",
+      endpoint: "PortalService.asmx",
+      requestParams: [
+        { name: "Account", type: "string", required: true, description: "Tài khoản nhân viên gọi lệnh phát hành hóa đơn" },
+        { name: "ACpass", type: "string", required: true, description: "Mật khẩu nhân viên" },
+        { name: "userName", type: "string", required: true, description: "Tài khoản ServiceRole" },
+        { name: "userPass", type: "string", required: true, description: "Mật khẩu ServiceRole" },
+        { name: "invFromNo", type: "string", required: true, description: "Từ số" },
+        { name: "invToNo", type: "string", required: true, description: "Đến số" },
+        { name: "invPattern", type: "string", required: true, description: "Mẫu số hóa đơn" },
+        { name: "invSerial", type: "string", required: true, description: "Ký hiệu hóa đơn" },
+        { name: "isXMLData", type: "bool", required: true, description: "1: có lấy xml data, 0: không lấy xml data" }
+      ],
+      responseParams: [
+        { code: "ERR:1", message: "Tài khoản đăng nhập sai hoặc không có quyền thêm mới hóa đơn" },
+        { code: "ERR:2", message: "Pattern và serial không được bỏ trống" },
+        { code: "ERR:3", message: "Từ số - đến số không hợp lệ" },
+        { code: "ERR:5", message: "Lỗi không xác định, không lấy được dữ liệu hóa đơn cấp mã theo dữ liệu truyền vào" },
+        { code: "ERR:7", message: "Không tìm thấy thông tin công ty" },
+        { code: "DataBase64", message: "Dữ liệu thông tin hóa đơn ở dạng XML đã base64 bao gồm: mẫu số, ký hiệu, số, trạng thái cấp mã, xml hóa đơn" }
+      ],
+      xmlTemplate: `<DSHDon>\n  <HDon>\n    <KHMSHDon>Mẫu số hóa đơn</KHMSHDon>\n    <KHHDon>Ký hiệu hóa đơn</KHHDon>\n    <SHDon>Số hóa đơn</SHDon>\n    <MCCQThue>Mã cơ quan thuế cấp (Trường hợp hóa đơn có mã)</MCCQThue>\n    <TThai>0: Chưa gửi cơ quan thuế\n1: Đã gửi cơ quan thuế\n2: Đã được CQT chấp nhận\n3: Đã bị CQT từ chối</TThai>\n    <MTLoi>thông báo lỗi CQT trả về</MTLoi>\n    <Fkey>Fkey hóa đơn</Fkey>\n  </HDon>\n</DSHDon>`
+    },
+    {
+      id: "get-mccqthue-by-fkeys",
+      serviceGroupId: "mtt-service",
+      sectionNumber: "5.4.2",
+      name: "GetMCCQThueByFkeys",
+      description: "Lấy trạng thái và XMLData hóa đơn có mã, trạng thái của hóa đơn không mã gửi CQT trả về theo danh sách Fkey.",
+      method: "GET",
+      endpoint: "PortalService.asmx",
+      requestParams: [
+        { name: "Account", type: "string", required: true, description: "Tài khoản nhân viên gọi lệnh phát hành hóa đơn" },
+        { name: "ACpass", type: "string", required: true, description: "Mật khẩu nhân viên" },
+        { name: "username", type: "string", required: true, description: "Tài khoản ServiceRole" },
+        { name: "password", type: "string", required: true, description: "Mật khẩu ServiceRole" },
+        { name: "pattern", type: "string", required: true, description: "Mẫu số hóa đơn" },
+        { name: "fkeys", type: "string", required: true, description: "Danh sách chuỗi fkey xác định hóa đơn cần lấy" }
+      ],
+      responseParams: [
+        { code: "ERR:1", message: "Tài khoản đăng nhập sai hoặc không có quyền thêm mới hóa đơn" },
+        { code: "ERR:2", message: "Không tìm thấy hóa đơn tương ứng." },
+        { code: "ERR:5", message: "Lỗi không xác định, không lấy được dữ liệu hóa đơn cấp mã theo dữ liệu truyền vào" },
+        { code: "ERR:10", message: "Vượt quá số lượng 100 hóa đơn cần lấy" },
+        { code: "ERR:20", message: "Không lấy được thông tin người dùng" },
+        { code: "DataBase64", message: "Dữ liệu thông tin hóa đơn ở dạng XML đã base64 bao gồm: mẫu số, ký hiệu, số, trạng thái cấp mã, xml hóa đơn" }
+      ],
+      xmlTemplate: `<DSHDon>\n  <HDon>\n    <KHMSHDon>Mẫu số hóa đơn</KHMSHDon>\n    <KHHDon>Ký hiệu hóa đơn</KHHDon>\n    <SHDon>Số hóa đơn</SHDon>\n    <MCCQThue>Mã cơ quan thuế cấp (Trường hợp hóa đơn có mã)</MCCQThue>\n    <TThai>0: Chưa gửi cơ quan thuế\n1: Đã gửi cơ quan thuế\n2: Đã được CQT chấp nhận\n3: Đã bị CQT từ chối</TThai>\n    <MTLoi>thông báo lỗi CQT trả về</MTLoi>\n    <Fkey>Fkey hóa đơn</Fkey>\n  </HDon>\n</DSHDon>`
+    },
+    {
+      id: "get-mccqthue-by-invtokens-no-xmlsign",
+      serviceGroupId: "mtt-service",
+      sectionNumber: "5.4.3",
+      name: "GetMCCQThueByInvTokensNoXMLSign",
+      description: "Lấy trạng thái hóa đơn có mã, hóa đơn không mã gửi CQT trả về theo danh sách invToken.",
+      method: "GET",
+      endpoint: "PortalService.asmx",
+      requestParams: [
+        { name: "Account", type: "string", required: true, description: "Tài khoản nhân viên gọi lệnh phát hành hóa đơn" },
+        { name: "ACpass", type: "string", required: true, description: "Mật khẩu nhân viên" },
+        { name: "username", type: "string", required: true, description: "Tài khoản ServiceRole" },
+        { name: "password", type: "string", required: true, description: "Mật khẩu ServiceRole" },
+        { name: "invTokens", type: "string", required: true, description: "Danh sách chuỗi token xác định hóa đơn cần lấy" }
+      ],
+      responseParams: [
+        { code: "ERR:1", message: "Tài khoản đăng nhập sai hoặc không có quyền thêm mới hóa đơn" },
+        { code: "ERR:2", message: "Không tìm thấy hóa đơn tương ứng." },
+        { code: "ERR:5", message: "Lỗi không xác định, không lấy được dữ liệu hóa đơn cấp mã theo dữ liệu truyền vào" },
+        { code: "ERR:10", message: "Vượt quá số lượng 100 hóa đơn cần lấy" },
+        { code: "ERR:20", message: "Không lấy được thông tin người dùng" },
+        { code: "DataBase64", message: "Dữ liệu thông tin hóa đơn ở dạng XML đã base64 bao gồm: mẫu số, ký hiệu, số, trạng thái cấp mã, xml hóa đơn" }
+      ],
+      xmlTemplate: `<DSHDon>\n  <HDon>\n    <KHMSHDon>Mẫu số hóa đơn</KHMSHDon>\n    <KHHDon>Ký hiệu hóa đơn</KHHDon>\n    <SHDon>Số hóa đơn</SHDon>\n    <MCCQThue>Mã cơ quan thuế cấp (Trường hợp hóa đơn có mã)</MCCQThue>\n    <TThai>0: Chưa gửi cơ quan thuế\n1: Đã gửi cơ quan thuế\n2: Đã được CQT chấp nhận\n3: Đã bị CQT từ chối</TThai>\n    <MTLoi>thông báo lỗi CQT trả về</MTLoi>\n    <Fkey>Fkey hóa đơn</Fkey>\n  </HDon>\n</DSHDon>`
+    },
+    {
+      id: "get-mccqthue-by-fkeys-no-xmlsign",
+      serviceGroupId: "mtt-service",
+      sectionNumber: "5.4.4",
+      name: "GetMCCQThueByFkeysNoXMLSign",
+      description: "Lấy trạng thái hóa đơn có mã, hóa đơn không mã gửi CQT trả về theo danh sách Fkey.",
+      method: "GET",
+      endpoint: "PortalService.asmx",
+      requestParams: [
+        { name: "Account", type: "string", required: true, description: "Tài khoản nhân viên gọi lệnh phát hành hóa đơn" },
+        { name: "ACpass", type: "string", required: true, description: "Mật khẩu nhân viên" },
+        { name: "username", type: "string", required: true, description: "Tài khoản ServiceRole" },
+        { name: "password", type: "string", required: true, description: "Mật khẩu ServiceRole" },
+        { name: "pattern", type: "string", required: true, description: "Mẫu số hóa đơn" },
+        { name: "fkeys", type: "string", required: true, description: "Danh sách chuỗi fkey xác định hóa đơn cần lấy" }
+      ],
+      responseParams: [
+        { code: "ERR:1", message: "Tài khoản đăng nhập sai hoặc không có quyền thêm mới hóa đơn" },
+        { code: "ERR:2", message: "Không tìm thấy hóa đơn tương ứng." },
+        { code: "ERR:5", message: "Lỗi không xác định, không lấy được dữ liệu hóa đơn cấp mã theo dữ liệu truyền vào" },
+        { code: "ERR:10", message: "Vượt quá số lượng 100 hóa đơn cần lấy" },
+        { code: "ERR:20", message: "Không lấy được thông tin người dùng" },
+        { code: "DataBase64", message: "Dữ liệu thông tin hóa đơn ở dạng XML đã base64 bao gồm: mẫu số, ký hiệu, số, trạng thái cấp mã, xml hóa đơn" }
+      ],
+      xmlTemplate: `<DSHDon>\n  <HDon>\n    <KHMSHDon>Mẫu số hóa đơn</KHMSHDon>\n    <KHHDon>Ký hiệu hóa đơn</KHHDon>\n    <SHDon>Số hóa đơn</SHDon>\n    <MCCQThue>Mã cơ quan thuế cấp (Trường hợp hóa đơn có mã)</MCCQThue>\n    <TThai>0: Chưa gửi cơ quan thuế\n1: Đã gửi cơ quan thuế\n2: Đã được CQT chấp nhận\n3: Đã bị CQT từ chối</TThai>\n    <MTLoi>thông báo lỗi CQT trả về</MTLoi>\n    <Fkey>Fkey hóa đơn</Fkey>\n  </HDon>\n</DSHDon>`
     }
   ]
 } satisfies VnptDocumentation;
