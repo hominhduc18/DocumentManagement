@@ -7,6 +7,7 @@ export function Sidebar({
   apiCounts,
   selectedGroupId,
   mainView,
+  hasGuide,
   onSelectGroup,
   onSelectView,
   onCloseMobile,
@@ -16,6 +17,7 @@ export function Sidebar({
   apiCounts: Record<string, number>;
   selectedGroupId: string | null;
   mainView: MainView;
+  hasGuide?: boolean;
   onSelectGroup: (id: string | null) => void;
   onSelectView: (view: MainView) => void;
   onCloseMobile?: () => void;
@@ -88,7 +90,33 @@ export function Sidebar({
           ))}
         </ul>
       </nav>
-      <div className="border-t border-gray-200 p-2 flex gap-2">
+      <div className="border-t border-gray-200 p-2 flex flex-col gap-2">
+        {hasGuide && (
+          <button
+            type="button"
+            onClick={() => {
+              onSelectView("guide");
+              onCloseMobile?.();
+            }}
+            className={`flex-1 flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+              mainView === "guide"
+                ? "bg-[#0066CC] text-white shadow-sm"
+                : "text-gray-700 hover:bg-white hover:shadow-sm"
+            }`}
+          >
+            <svg
+              className="h-4 w-4 shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              aria-hidden
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            Hướng dẫn XML BHYT
+          </button>
+        )}
+        <div className="flex gap-2 w-full">
         <button
           type="button"
           onClick={handleErrors}
@@ -127,6 +155,7 @@ export function Sidebar({
             </svg>
           </button>
         )}
+        </div>
       </div>
     </aside>
   );

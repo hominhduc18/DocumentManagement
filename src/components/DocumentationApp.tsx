@@ -9,6 +9,7 @@ import { ErrorCodesView } from "@/components/ErrorCodesView";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { Toast } from "@/components/Toast";
+import { BhytGuide } from "@/components/BhytGuide";
 import { apiMatchesSearch, copyText, normalizeSearch } from "@/lib/utils";
 import type {
   ApiDoc,
@@ -129,6 +130,7 @@ export function DocumentationApp() {
               apiCounts={apiCounts}
               selectedGroupId={selectedGroupId}
               mainView={mainView}
+              hasGuide={doc.hasGuide}
               onSelectGroup={setSelectedGroupId}
               onSelectView={setMainView}
               onCloseMobile={() => setMobileSidebarOpen(false)}
@@ -138,7 +140,11 @@ export function DocumentationApp() {
         </div>
 
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          {mainView === "errors" ? (
+          {mainView === "guide" ? (
+            <div className="flex-1 overflow-y-auto p-4 lg:p-6 bg-slate-50">
+              <BhytGuide />
+            </div>
+          ) : mainView === "errors" ? (
             <div className="flex-1 overflow-y-auto p-4 lg:p-6">
               <ErrorCodesView errors={doc.globalErrors} />
             </div>

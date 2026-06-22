@@ -4,6 +4,7 @@ export const bhytDocumentation: VnptDocumentation = {
   title: "HƯỚNG DẪN LIÊN THÔNG DỮ LIỆU PHỤC VỤ VIỆC QUẢN LÝ, GIÁM ĐỊNH, THANH TOÁN CHI PHÍ KCB",
   version: "1.0 (QĐ 4750/QĐ-BYT)",
   lastUpdated: "2024-05-03",
+  hasGuide: true,
   serviceGroups: [
     {
       id: "bhyt-web-service",

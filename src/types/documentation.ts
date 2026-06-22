@@ -43,8 +43,9 @@ export interface VnptDocumentation {
   serviceGroups: ServiceGroup[];
   globalErrors: GlobalError[];
   apis: ApiDoc[];
+  hasGuide?: boolean;
 }
 
 export type ViewMode = "grid" | "list";
-export type MainView = "apis" | "errors";
+export type MainView = "apis" | "errors" | "guide";
 export type MethodFilter = "ALL" | ApiMethod;
