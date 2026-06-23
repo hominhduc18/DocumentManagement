@@ -1,6 +1,6 @@
 import type { VnptDocumentation } from "@/types/documentation";
 
-export const vnptDocumentation = {
+export const vnptDocumentation: VnptDocumentation = {
   title: "Tài liệu API Hóa đơn điện tử VNPT",
   version: "6.0",
   lastUpdated: "15/04",
