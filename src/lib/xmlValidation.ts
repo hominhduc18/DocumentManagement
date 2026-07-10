@@ -176,7 +176,7 @@ export function validateEnvelopeXml(xmlString: string): EnvelopeValidationResult
         try {
           decodedXml = decodeBase64(noidungBase64);
         } catch (e) {
-          return { loaiHoSo, result: { isValid: false, errors: [{field: 'NOIDUNGFILE', message: 'Không thể decode Base64', type: 'error'}], parsedData: null, xmlType: loaiHoSo, rawXml: '' } };
+          return { loaiHoSo, result: { isValid: false, errors: [{field: 'NOIDUNGFILE', message: 'Không thể decode Base64', type: 'error' as const}], parsedData: null, xmlType: loaiHoSo, rawXml: '' } };
         }
         
         const result = validateSingleXml(decodedXml, loaiHoSo);
