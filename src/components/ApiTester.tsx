@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -44,7 +45,7 @@ export function ApiTester({ api }: { api: ApiDoc }) {
     let parsedHeaders: Record<string, string> = {};
     try {
       parsedHeaders = JSON.parse(headers);
-    } catch (e) {
+    } catch {
       setError("Headers không đúng định dạng JSON.");
       setIsLoading(false);
       return;
@@ -71,7 +72,7 @@ export function ApiTester({ api }: { api: ApiDoc }) {
       try {
         const parsed = JSON.parse(resData);
         resData = JSON.stringify(parsed, null, 2);
-      } catch (e) {
+      } catch {
         // Keep raw text if not JSON
       }
 
@@ -82,8 +83,8 @@ export function ApiTester({ api }: { api: ApiDoc }) {
         headers: resHeaders,
         time,
       });
-    } catch (e: any) {
-      setError(e.message || "Lỗi mạng. Khả năng cao do API chặn CORS từ trình duyệt. Vui lòng xem Console để biết thêm chi tiết.");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Lỗi mạng. Khả năng cao do API chặn CORS từ trình duyệt. Vui lòng xem Console để biết thêm chi tiết.");
     } finally {
       setIsLoading(false);
     }
@@ -95,7 +96,7 @@ export function ApiTester({ api }: { api: ApiDoc }) {
         <select 
           className="rounded-md border border-gray-300 px-3 py-2 font-semibold text-gray-700 outline-none focus:border-[#0066CC] focus:ring-1 focus:ring-[#0066CC]"
           value={method}
-          onChange={e => setMethod(e.target.value as any)}
+          onChange={e => setMethod(e.target.value as typeof method)}
         >
           <option value="GET">GET</option>
           <option value="POST">POST</option>

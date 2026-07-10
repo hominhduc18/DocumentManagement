@@ -121,7 +121,7 @@ export function BhytXmlViewer() {
       <div className="p-2 space-y-2">
         {filteredData.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
-            Không tìm thấy trường dữ liệu nào phù hợp với "{searchQuery}"
+            Không tìm thấy trường dữ liệu nào phù hợp với &quot;{searchQuery}&quot;
           </div>
         ) : (
           filteredData.map((table) => {

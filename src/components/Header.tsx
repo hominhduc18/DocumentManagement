@@ -42,6 +42,16 @@ export function Header({
                     <option value="bhyt">BHYT API</option>
                   </select>
                 )}
+                <a
+                  href="/xml-validator"
+                  target="_blank"
+                  className="ml-2 inline-flex items-center gap-1 rounded-md bg-[#0066CC] px-3 py-1 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                  Công cụ XML
+                </a>
               </div>
               <p className="text-xs text-gray-500 sm:text-sm">
                 Tra cứu & quản lý tài liệu tích hợp
