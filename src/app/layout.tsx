@@ -26,7 +26,7 @@ export default function RootLayout({
         <div className="animation-delay-2000 pointer-events-none fixed top-[10%] right-[-5%] z-0 h-[600px] w-[600px] animate-blob rounded-full bg-emerald-400 opacity-50 mix-blend-multiply blur-3xl filter"></div>
         <div className="animation-delay-4000 pointer-events-none fixed bottom-[-10%] left-[20%] z-0 h-[600px] w-[600px] animate-blob rounded-full bg-indigo-400 opacity-50 mix-blend-multiply blur-3xl filter"></div>
         
-        <div className="relative z-10 h-full">
+        <div className="relative z-10 h-screen overflow-y-auto overflow-x-hidden">
           {children}
         </div>
       </body>
