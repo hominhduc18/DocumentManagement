@@ -211,23 +211,34 @@ export function validateEnvelopeXml(xmlString: string): EnvelopeValidationResult
   }
 }
 
-export function updateXmlField(parsedData: any, fieldName: string, newValue: string) {
+export function updateXmlFieldByPath(parsedData: any, fullPath: string, newValue: string) {
   const newData = JSON.parse(JSON.stringify(parsedData));
+  const rootKeys = Object.keys(newData).filter(k => !k.startsWith('?'));
+  if (rootKeys.length === 0) return newData;
+  const rootTag = rootKeys[0];
   
-  const updateNode = (node: any) => {
-    if (typeof node === 'object' && node !== null) {
-      if (node.hasOwnProperty(fieldName)) {
-        node[fieldName] = newValue;
-      }
-      for (const key of Object.keys(node)) {
-        if (typeof node[key] === 'object') {
-          updateNode(node[key]);
-        }
+  let current = newData[rootTag];
+  const parts = fullPath.match(/([^[.\]]+|\[\d+\])/g);
+  
+  if (parts) {
+    for (let i = 0; i < parts.length - 1; i++) {
+      let part = parts[i];
+      if (part.startsWith('[')) {
+        const idx = parseInt(part.replace(/[\[\]]/g, ''));
+        current = current[idx];
+      } else {
+        current = current[part];
       }
     }
-  };
+    const lastPart = parts[parts.length - 1];
+    if (lastPart.startsWith('[')) {
+      const idx = parseInt(lastPart.replace(/[\[\]]/g, ''));
+      current[idx] = newValue;
+    } else {
+      current[lastPart] = newValue;
+    }
+  }
   
-  updateNode(newData);
   return newData;
 }
 

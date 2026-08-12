@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { validateEnvelopeXml, buildXml, updateXmlField, EnvelopeValidationResult, rebuildEnvelopeXml } from '@/lib/xmlValidation';
+import { validateEnvelopeXml, buildXml, updateXmlFieldByPath, EnvelopeValidationResult, rebuildEnvelopeXml } from '@/lib/xmlValidation';
 import { Upload, Download, CheckCircle, AlertCircle, Edit2, Save, X, FileJson } from 'lucide-react';
 import xmlFieldsData from '@/data/xmlFieldsData.json';
 
@@ -26,18 +26,20 @@ export default function XmlValidator() {
     }
   };
 
-  const handleValidate = (text: string = xmlInput) => {
+  const handleValidate = (text: string = xmlInput, resetTab: boolean = true) => {
     if (!text.trim()) return;
     const result = validateEnvelopeXml(text);
     setEnvelopeResult(result);
-    setSelectedTab(0);
+    if (resetTab) {
+      setSelectedTab(0);
+    }
   };
 
   const currentFile = envelopeResult?.files[selectedTab];
   const validationResult = currentFile?.result;
 
-  const startEdit = (field: string, currentValue: any) => {
-    setEditingField(field);
+  const startEdit = (fullPath: string, currentValue: any) => {
+    setEditingField(fullPath);
     setEditValue(String(currentValue || ''));
   };
 
@@ -48,7 +50,7 @@ export default function XmlValidator() {
 
   const saveEdit = () => {
     if (validationResult?.parsedData && editingField && envelopeResult && currentFile) {
-      const newData = updateXmlField(validationResult.parsedData, editingField, editValue);
+      const newData = updateXmlFieldByPath(validationResult.parsedData, editingField, editValue);
       const newInnerXml = buildXml(newData);
       
       let newXmlInput = xmlInput;
@@ -65,7 +67,7 @@ export default function XmlValidator() {
       }
 
       setXmlInput(newXmlInput);
-      handleValidate(newXmlInput);
+      handleValidate(newXmlInput, false);
       setEditingField(null);
     }
   };
@@ -82,7 +84,7 @@ export default function XmlValidator() {
 
   const getDisplayFields = () => {
     if (!validationResult?.parsedData) return [];
-    const fields: { key: string; value: any; error: string | null }[] = [];
+    const fields: { key: string; value: any; error: string | null; fullPath: string }[] = [];
     
     const extractFields = (node: any, path: string = '') => {
       if (typeof node === 'object' && node !== null && !Array.isArray(node)) {
@@ -90,7 +92,8 @@ export default function XmlValidator() {
           if (key.startsWith('@_')) continue;
           if (typeof node[key] !== 'object') {
             const error = validationResult.errors.find(e => e.field === key)?.message || null;
-            fields.push({ key, value: node[key], error });
+            const fullPath = path ? `${path}.${key}` : key;
+            fields.push({ key, value: node[key], error, fullPath });
           } else {
             extractFields(node[key], path ? `${path}.${key}` : key);
           }
@@ -107,7 +110,7 @@ export default function XmlValidator() {
     
     validationResult.errors.forEach(err => {
       if (!fields.find(f => f.key === err.field)) {
-        fields.push({ key: err.field, value: '', error: err.message });
+        fields.push({ key: err.field, value: '', error: err.message, fullPath: err.field });
       }
     });
 
@@ -232,7 +235,7 @@ export default function XmlValidator() {
                   <tbody className="bg-white divide-y divide-gray-200">
                   {displayFields.map((field, idx) => {
                     const rule = ruleDef?.fields.find(r => r.name === field.key);
-                    const isEditing = editingField === field.key;
+                    const isEditing = editingField === field.fullPath;
                     
                     return (
                       <tr key={idx} className={field.error ? 'bg-rose-50/50' : 'hover:bg-gray-50/50'}>
@@ -244,7 +247,7 @@ export default function XmlValidator() {
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 max-w-md break-words">
                           {isEditing ? (
                             <input
                               type="text"
@@ -254,7 +257,7 @@ export default function XmlValidator() {
                               autoFocus
                             />
                           ) : (
-                            <div className="text-sm text-gray-900 truncate max-w-xs font-mono" title={String(field.value)}>
+                            <div className="text-sm text-gray-900 font-mono break-words whitespace-pre-wrap" title={String(field.value)}>
                               {field.value === '' || field.value === undefined ? (
                                 <span className="text-gray-400 italic">(Trống)</span>
                               ) : (
@@ -288,7 +291,7 @@ export default function XmlValidator() {
                             </div>
                           ) : (
                             <button 
-                              onClick={() => startEdit(field.key, field.value)}
+                              onClick={() => startEdit(field.fullPath, field.value)}
                               className="text-[#0066CC] hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded flex items-center transition-colors"
                             >
                               <Edit2 className="w-3.5 h-3.5 mr-1" />
