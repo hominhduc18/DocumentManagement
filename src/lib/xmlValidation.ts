@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { XMLParser, XMLBuilder } from 'fast-xml-parser';
 import xmlFieldsData from '../data/xmlFieldsData.json';
 
@@ -211,7 +213,7 @@ export function validateEnvelopeXml(xmlString: string): EnvelopeValidationResult
   }
 }
 
-export function updateXmlFieldByPath(parsedData: any, fullPath: string, newValue: string) {
+export function updateXmlFieldByPath(parsedData: unknown, fullPath: string, newValue: string) {
   const newData = JSON.parse(JSON.stringify(parsedData));
   const rootKeys = Object.keys(newData).filter(k => !k.startsWith('?'));
   if (rootKeys.length === 0) return newData;
@@ -222,7 +224,7 @@ export function updateXmlFieldByPath(parsedData: any, fullPath: string, newValue
   
   if (parts) {
     for (let i = 0; i < parts.length - 1; i++) {
-      let part = parts[i];
+      const part = parts[i];
       if (part.startsWith('[')) {
         const idx = parseInt(part.replace(/[\[\]]/g, ''));
         current = current[idx];

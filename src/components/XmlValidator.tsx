@@ -38,7 +38,7 @@ export default function XmlValidator() {
   const currentFile = envelopeResult?.files[selectedTab];
   const validationResult = currentFile?.result;
 
-  const startEdit = (fullPath: string, currentValue: any) => {
+  const startEdit = (fullPath: string, currentValue: unknown) => {
     setEditingField(fullPath);
     setEditValue(String(currentValue || ''));
   };
@@ -84,18 +84,19 @@ export default function XmlValidator() {
 
   const getDisplayFields = () => {
     if (!validationResult?.parsedData) return [];
-    const fields: { key: string; value: any; error: string | null; fullPath: string }[] = [];
+    const fields: { key: string; value: unknown; error: string | null; fullPath: string }[] = [];
     
-    const extractFields = (node: any, path: string = '') => {
+    const extractFields = (node: unknown, path: string = '') => {
       if (typeof node === 'object' && node !== null && !Array.isArray(node)) {
-        for (const key of Object.keys(node)) {
+        const obj = node as Record<string, unknown>;
+        for (const key of Object.keys(obj)) {
           if (key.startsWith('@_')) continue;
-          if (typeof node[key] !== 'object') {
+          if (typeof obj[key] !== 'object') {
             const error = validationResult.errors.find(e => e.field === key)?.message || null;
             const fullPath = path ? `${path}.${key}` : key;
-            fields.push({ key, value: node[key], error, fullPath });
+            fields.push({ key, value: obj[key], error, fullPath });
           } else {
-            extractFields(node[key], path ? `${path}.${key}` : key);
+            extractFields(obj[key], path ? `${path}.${key}` : key);
           }
         }
       } else if (Array.isArray(node)) {
