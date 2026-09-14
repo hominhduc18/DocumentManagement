@@ -5,7 +5,7 @@ import { PDFDocument, rgb } from 'pdf-lib';
 import {
   Upload, FileText, Settings2, ChevronDown, ChevronUp,
   Download, Loader2, AlertCircle, CheckCircle2, X,
-  Maximize2, ScanLine, Layers, Cpu,
+  Maximize2, ScanLine, Layers, Cpu, Eye, Printer, EyeOff,
 } from 'lucide-react';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -92,105 +92,231 @@ function autoNPages(
 interface ProcOptions {
   pages: number; dpi: number; margin: number;
   threshold: number; minGap: number;
-  targetScale: number; pageIndex: number;
+  targetScale: number;
 }
 
+/**
+ * Process ALL pages of the input PDF.
+ * Each source page is rendered → analysed → split into A4 sub-pages.
+ * All sub-pages are collected into one output PDF.
+ */
 async function processPdfClientSide(
   file: File,
   opts: ProcOptions,
-  onProgress: (p: number) => void,
-): Promise<{ bytes: Uint8Array; pageCount: number }> {
+  onProgress: (p: number, label: string) => void,
+): Promise<{ bytes: Uint8Array; pageCount: number; pageThumbs: string[] }> {
 
-  onProgress(5);
+  onProgress(2, 'Đang tải PDF…');
 
-  // 1. Load pdfjs
   const pdfjs = await loadPdfJs();
   const ab = await file.arrayBuffer();
   const pdfjsDoc = await pdfjs.getDocument({ data: ab }).promise;
-  const page = await pdfjsDoc.getPage(opts.pageIndex + 1);
-  onProgress(15);
+  const totalSrcPages = pdfjsDoc.numPages;
 
-  // 2. Render PDF page → off-screen canvas
-  const scale = opts.dpi / 72;
-  const viewport = page.getViewport({ scale });
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.round(viewport.width);
-  canvas.height = Math.round(viewport.height);
-  const ctx = canvas.getContext('2d')!;
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  await page.render({ canvasContext: ctx as unknown as CanvasRenderingContext2D, viewport }).promise;
-  onProgress(40);
+  onProgress(5, `Tìm thấy ${totalSrcPages} trang gốc…`);
 
-  // 3. Analyse pixel rows
-  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const rowMeans = computeRowMeans(imgData);
-  onProgress(50);
-
-  // 4. Find gaps → cut points
-  const gaps = findWhiteGaps(rowMeans, opts.threshold, opts.minGap);
-  const midpoints = gaps.map(([s, e]) => Math.round((s + e) / 2));
-  const nPages = opts.pages > 0
-    ? opts.pages
-    : autoNPages(canvas.width, canvas.height, opts.dpi, opts.margin, opts.targetScale);
-  const cutPoints = chooseCutPoints(canvas.height, nPages, midpoints);
-  const boundaries = [0, ...cutPoints, canvas.height];
-  onProgress(58);
-
-  // 5. Crop each part → PNG ArrayBuffer
-  const parts: { data: Uint8Array; w: number; h: number }[] = [];
-  for (let i = 0; i < boundaries.length - 1; i++) {
-    const top = boundaries[i];
-    const bottom = boundaries[i + 1];
-    if (bottom <= top) continue;
-
-    const partCanvas = document.createElement('canvas');
-    partCanvas.width = canvas.width;
-    partCanvas.height = bottom - top;
-    const pCtx = partCanvas.getContext('2d')!;
-    pCtx.fillStyle = '#ffffff';
-    pCtx.fillRect(0, 0, partCanvas.width, partCanvas.height);
-    pCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, -top, canvas.width, canvas.height);
-
-    const blob = await new Promise<Blob>((res) =>
-      partCanvas.toBlob((b) => res(b!), 'image/png'),
-    );
-    parts.push({
-      data: new Uint8Array(await blob.arrayBuffer()),
-      w: canvas.width,
-      h: bottom - top,
-    });
-
-    onProgress(58 + Math.round(((i + 1) / (boundaries.length - 1)) * 25));
-  }
-
-  if (parts.length === 0) throw new Error('Không tạo được trang nào từ file này.');
-
-  // 6. Build multi-page A4 PDF
   const outDoc = await PDFDocument.create();
   const pxToPt = 72 / opts.dpi;
   const usableW = A4_W - 2 * opts.margin;
   const usableH = A4_H - 2 * opts.margin;
 
-  for (const part of parts) {
-    const pg = outDoc.addPage([A4_W, A4_H]);
-    pg.drawRectangle({ x: 0, y: 0, width: A4_W, height: A4_H, color: rgb(1, 1, 1) });
+  for (let srcIdx = 0; srcIdx < totalSrcPages; srcIdx++) {
+    const baseProgress = 5 + Math.round((srcIdx / totalSrcPages) * 90);
+    onProgress(baseProgress, `Xử lý trang ${srcIdx + 1} / ${totalSrcPages}…`);
 
-    const partWPt = part.w * pxToPt;
-    const partHPt = part.h * pxToPt;
-    const s = Math.min(usableW / partWPt, usableH / partHPt);
-    const drawW = partWPt * s;
-    const drawH = partHPt * s;
-    const x = (A4_W - drawW) / 2;
-    const y = (A4_H - drawH) / 2;
+    const page = await pdfjsDoc.getPage(srcIdx + 1);
 
-    const img = await outDoc.embedPng(part.data);
-    pg.drawImage(img, { x, y, width: drawW, height: drawH });
+    // Render source page to canvas
+    const scale = opts.dpi / 72;
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(viewport.width);
+    canvas.height = Math.round(viewport.height);
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    await page.render({ canvasContext: ctx as unknown as CanvasRenderingContext2D, viewport }).promise;
+
+    // Analyse & cut
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const rowMeans = computeRowMeans(imgData);
+    const gaps = findWhiteGaps(rowMeans, opts.threshold, opts.minGap);
+    const midpoints = gaps.map(([s, e]) => Math.round((s + e) / 2));
+    const nPages = opts.pages > 0
+      ? opts.pages
+      : autoNPages(canvas.width, canvas.height, opts.dpi, opts.margin, opts.targetScale);
+    const cutPoints = chooseCutPoints(canvas.height, nPages, midpoints);
+    const boundaries = [0, ...cutPoints, canvas.height];
+
+    // Build each A4 sub-page
+    for (let i = 0; i < boundaries.length - 1; i++) {
+      const top = boundaries[i];
+      const bottom = boundaries[i + 1];
+      if (bottom <= top) continue;
+
+      const partCanvas = document.createElement('canvas');
+      partCanvas.width = canvas.width;
+      partCanvas.height = bottom - top;
+      const pCtx = partCanvas.getContext('2d')!;
+      pCtx.fillStyle = '#ffffff';
+      pCtx.fillRect(0, 0, partCanvas.width, partCanvas.height);
+      pCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, -top, canvas.width, canvas.height);
+
+      const blob = await new Promise<Blob>((res) =>
+        partCanvas.toBlob((b) => res(b!), 'image/png'),
+      );
+      const imgBytes = new Uint8Array(await blob.arrayBuffer());
+
+      const partWPt = canvas.width * pxToPt;
+      const partHPt = (bottom - top) * pxToPt;
+      const s = Math.min(usableW / partWPt, usableH / partHPt);
+      const drawW = partWPt * s;
+      const drawH = partHPt * s;
+      const x = (A4_W - drawW) / 2;
+      const y = (A4_H - drawH) / 2;
+
+      const pg = outDoc.addPage([A4_W, A4_H]);
+      pg.drawRectangle({ x: 0, y: 0, width: A4_W, height: A4_H, color: rgb(1, 1, 1) });
+      const img = await outDoc.embedPng(imgBytes);
+      pg.drawImage(img, { x, y, width: drawW, height: drawH });
+    }
   }
 
-  onProgress(97);
+  onProgress(97, 'Đang tạo file PDF đầu ra…');
   const bytes = await outDoc.save();
-  return { bytes, pageCount: parts.length };
+  // ⚠️ pdfjs.getDocument({ data }) may transfer/consume the underlying ArrayBuffer.
+  // Keep a safe copy for the caller BEFORE passing to pdfjs.
+  const safeBytes = bytes.slice();
+
+  // Build thumbnails (small previews) for each A4 page
+  const pageThumbs: string[] = [];
+  const thumbPages = outDoc.getPageCount();
+  const thumbDoc = await pdfjs.getDocument({ data: safeBytes }).promise;
+  for (let ti = 0; ti < thumbPages; ti++) {
+    const tp = await thumbDoc.getPage(ti + 1);
+    const tvp = tp.getViewport({ scale: 1 });
+    const thumbScale = 320 / tvp.width;
+    const tvp2 = tp.getViewport({ scale: thumbScale });
+    const tc = document.createElement('canvas');
+    tc.width = Math.round(tvp2.width);
+    tc.height = Math.round(tvp2.height);
+    const tcx = tc.getContext('2d')!;
+    tcx.fillStyle = '#fff';
+    tcx.fillRect(0, 0, tc.width, tc.height);
+    await tp.render({ canvasContext: tcx as unknown as CanvasRenderingContext2D, viewport: tvp2 }).promise;
+    pageThumbs.push(tc.toDataURL('image/jpeg', 0.7));
+  }
+
+  return { bytes, pageCount: outDoc.getPageCount(), pageThumbs };
+}
+
+// ── Print helper ──────────────────────────────────────────────────────────────
+function printPdf(url: string, pageRange?: string) {
+  const src = pageRange ? `${url}#page=${pageRange}` : url;
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;';
+  iframe.src = src;
+  document.body.appendChild(iframe);
+  iframe.onload = () => {
+    try {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+    } catch {
+      window.open(src, '_blank');
+    }
+    setTimeout(() => { try { document.body.removeChild(iframe); } catch { /* ignore */ } }, 60_000);
+  };
+}
+
+// ── Page thumbnail grid + print selector ───────────────────────────────────────────
+function PageGrid({
+  thumbs,
+  selected,
+  onToggle,
+  onSelectAll,
+  onDeselectAll,
+  onPrintSelected,
+  onPrintAll,
+}: {
+  thumbs: string[];
+  selected: Set<number>;
+  onToggle: (i: number) => void;
+  onSelectAll: () => void;
+  onDeselectAll: () => void;
+  onPrintSelected: () => void;
+  onPrintAll: () => void;
+}) {
+  const nSel = selected.size;
+  const nAll = thumbs.length;
+
+  return (
+    <div className="space-y-3">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
+        <span className="text-sm font-semibold text-gray-700 mr-auto">
+          {nSel === 0 ? 'Chọn trang muốn in' : `Đã chọn ${nSel} / ${nAll} trang`}
+        </span>
+        <button onClick={onSelectAll}
+          className="text-xs px-2.5 py-1 rounded-lg border border-gray-300 hover:bg-gray-100 text-gray-600 transition-colors">
+          Chọn tất cả
+        </button>
+        <button onClick={onDeselectAll}
+          className="text-xs px-2.5 py-1 rounded-lg border border-gray-300 hover:bg-gray-100 text-gray-600 transition-colors">
+          Bỏ chọn
+        </button>
+        <button
+          onClick={onPrintSelected}
+          disabled={nSel === 0}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-[#0066CC] hover:bg-blue-700 text-white font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          <Printer className="w-3.5 h-3.5" />
+          In {nSel > 0 ? `${nSel} trang` : 'đã chọn'}
+        </button>
+        <button
+          onClick={onPrintAll}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border-2 border-[#0066CC] text-[#0066CC] font-semibold hover:bg-blue-50 transition-colors"
+        >
+          <Printer className="w-3.5 h-3.5" />
+          In tất cả ({nAll})
+        </button>
+      </div>
+
+      {/* Thumbnail grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 max-h-[80vh] overflow-y-auto pr-1">
+        {thumbs.map((src, i) => {
+          const checked = selected.has(i);
+          return (
+            <button
+              key={i}
+              onClick={() => onToggle(i)}
+              className={`relative flex flex-col items-center rounded-xl border-2 overflow-hidden transition-all duration-150 group
+                ${ checked
+                  ? 'border-[#0066CC] shadow-md shadow-blue-200'
+                  : 'border-gray-200 hover:border-blue-300'}`}
+            >
+              {/* Checkbox overlay */}
+              <div className={`absolute top-1.5 right-1.5 w-5 h-5 rounded-full border-2 flex items-center justify-center z-10 transition-colors
+                ${checked ? 'bg-[#0066CC] border-[#0066CC]' : 'bg-white/80 border-gray-300 group-hover:border-blue-400'}`}>
+                {checked && (
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 12 12">
+                    <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </div>
+              {/* Thumbnail image */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt={`Trang ${i + 1}`} className="w-full object-contain bg-gray-50" />
+              {/* Page number */}
+              <span className={`w-full text-center text-xs py-1 font-semibold transition-colors
+                ${checked ? 'bg-[#0066CC] text-white' : 'bg-gray-100 text-gray-500'}`}>
+                {i + 1}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 // ── UI sub-components ─────────────────────────────────────────────────────────
@@ -240,28 +366,46 @@ function StatBadge({ icon: Icon, label, value, color = 'blue' }: {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function PdfEnlarger() {
-  const [file, setFile] = useState<File | null>(null);
-  const [status, setStatus] = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [errorMsg, setErrorMsg] = useState('');
+  const [file, setFile]           = useState<File | null>(null);
+  const [status, setStatus]       = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
+  const [errorMsg, setErrorMsg]   = useState('');
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [resultPages, setResultPages] = useState(0);
-  const [resultSize, setResultSize] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
+  const [resultSize, setResultSize]   = useState(0);
+  const [pageThumbs, setPageThumbs]   = useState<string[]>([]);
+  const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
+  const [showPageGrid, setShowPageGrid]   = useState(false);
+  const [isDragging, setIsDragging]   = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress]   = useState(0);
+  const [progressLabel, setProgressLabel] = useState('');
+  const [totalSrcPages, setTotalSrcPages] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [opts, setOpts] = useState<ProcOptions>({
     pages: 0, dpi: 150, margin: 20,
     threshold: 245, minGap: 15,
-    targetScale: 0.5, pageIndex: 0,
+    targetScale: 0.5,
   });
+  const [oneToOne, setOneToOne] = useState(false); // 1 trang gốc → đúng 1 trang A4
 
   const setOpt = <K extends keyof ProcOptions>(k: K, v: ProcOptions[K]) =>
     setOpts((o) => ({ ...o, [k]: v }));
 
   const fmtSize = (b: number) =>
     b > 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(1)} MB` : `${Math.round(b / 1024)} KB`;
+
+  // Peek at total page count when a file is chosen
+  const peekPageCount = useCallback(async (f: File) => {
+    try {
+      const pdfjs = await loadPdfJs();
+      const ab = await f.arrayBuffer();
+      const doc = await pdfjs.getDocument({ data: ab }).promise;
+      setTotalSrcPages(doc.numPages);
+    } catch {
+      setTotalSrcPages(null);
+    }
+  }, []);
 
   const handleFile = useCallback((f: File) => {
     if (!f.name.toLowerCase().endsWith('.pdf')) {
@@ -271,7 +415,9 @@ export default function PdfEnlarger() {
       setErrorMsg('File quá lớn (tối đa 100 MB).'); setStatus('error'); return;
     }
     setFile(f); setStatus('idle'); setResultUrl(null); setErrorMsg('');
-  }, []);
+    setShowPageGrid(false); setPageThumbs([]); setSelectedPages(new Set()); setTotalSrcPages(null);
+    peekPageCount(f);
+  }, [peekPageCount]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setIsDragging(false);
@@ -281,14 +427,21 @@ export default function PdfEnlarger() {
 
   const handleProcess = async () => {
     if (!file) return;
-    setStatus('processing'); setProgress(0); setErrorMsg(''); setResultUrl(null);
+    setStatus('processing'); setProgress(0); setProgressLabel(''); setErrorMsg('');
+    setResultUrl(null); setShowPageGrid(false); setPageThumbs([]); setSelectedPages(new Set());
 
     try {
-      const { bytes, pageCount } = await processPdfClientSide(file, opts, setProgress);
-      const blob = new Blob([Buffer.from(bytes)], { type: 'application/pdf' });
+      const { bytes, pageCount, pageThumbs: thumbs } = await processPdfClientSide(
+        file, { ...opts, pages: oneToOne ? 1 : opts.pages },
+        (p, label) => { setProgress(p); setProgressLabel(label); },
+      );
+      const blob = new Blob([bytes], { type: 'application/pdf' });
       setResultUrl(URL.createObjectURL(blob));
       setResultPages(pageCount);
       setResultSize(blob.size);
+      setPageThumbs(thumbs);
+      // Select all pages by default
+      setSelectedPages(new Set(Array.from({ length: pageCount }, (_, i) => i)));
       setProgress(100);
       setStatus('done');
     } catch (err: unknown) {
@@ -307,15 +460,39 @@ export default function PdfEnlarger() {
 
   const reset = () => {
     setFile(null); setStatus('idle'); setResultUrl(null);
-    setErrorMsg(''); setProgress(0);
+    setErrorMsg(''); setProgress(0); setProgressLabel('');
+    setShowPageGrid(false); setPageThumbs([]); setSelectedPages(new Set()); setTotalSrcPages(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
+
+  // Print helpers
+  const printSelectedPages = useCallback(() => {
+    if (!resultUrl || selectedPages.size === 0) return;
+    // Build a new PDF containing only selected pages, then print it
+    const sorted = [...selectedPages].sort((a, b) => a - b);
+    // Create print HTML with selected thumbs as images (one per A4 page)
+    const imgs = sorted.map((i) => pageThumbs[i]).filter(Boolean);
+    const html = `<!DOCTYPE html><html><head><style>
+      @page{size:A4;margin:0}body{margin:0;padding:0}
+      img{display:block;width:100%;height:100vh;object-fit:contain;page-break-after:always}
+    </style></head><body>${imgs.map((src) => `<img src="${src}">`).join('')}</body></html>`;
+    const win = window.open('', '_blank')!;
+    win.document.write(html);
+    win.document.close();
+    win.onload = () => { win.focus(); win.print(); };
+  }, [resultUrl, selectedPages, pageThumbs]);
+
+  const printAllPages = useCallback(() => {
+    if (!resultUrl) return;
+    printPdf(resultUrl);
+  }, [resultUrl]);
 
   const isProcessing = status === 'processing';
 
   return (
+    <>
     <div className="min-h-screen py-10 px-4">
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
 
         {/* ── Header ── */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
@@ -367,7 +544,12 @@ export default function PdfEnlarger() {
                 </div>
                 <div>
                   <p className="font-semibold text-gray-800 text-sm truncate max-w-xs">{file.name}</p>
-                  <p className="text-xs text-gray-500">{fmtSize(file.size)}</p>
+                  <p className="text-xs text-gray-500">
+                    {fmtSize(file.size)}
+                    {totalSrcPages !== null && (
+                      <span className="ml-2 text-[#0066CC] font-semibold">· {totalSrcPages} trang gốc</span>
+                    )}
+                  </p>
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); reset(); }}
@@ -411,7 +593,7 @@ export default function PdfEnlarger() {
           {showAdvanced && (
             <div className="px-5 pb-5 pt-1 grid grid-cols-1 sm:grid-cols-2 gap-5 border-t border-gray-100">
               <div className="sm:col-span-2">
-                <Slider label="Số trang đầu ra" hint="0 = tự động tính dựa theo target scale"
+                <Slider label="Số trang A4 mỗi trang gốc" hint="0 = tự động · 1 = không chia trang"
                   value={opts.pages} min={0} max={20} onChange={(v) => setOpt('pages', v)} />
               </div>
               <Slider label="Độ phân giải (DPI)" hint="Cao hơn → nét hơn nhưng xử lý lâu hơn"
@@ -424,10 +606,34 @@ export default function PdfEnlarger() {
                 value={opts.threshold} min={200} max={255} onChange={(v) => setOpt('threshold', v)} />
               <Slider label="Chiều cao vùng trắng tối thiểu" hint="Vùng trắng ≥ số pixel này mới làm điểm cắt"
                 value={opts.minGap} min={5} max={80} unit=" px" onChange={(v) => setOpt('minGap', v)} />
-              <Slider label="Trang trong PDF gốc" hint="0-based: 0 = trang đầu tiên"
-                value={opts.pageIndex} min={0} max={20} onChange={(v) => setOpt('pageIndex', v)} />
             </div>
           )}
+        </div>
+
+        {/* ── Mode toggle ── */}
+        <div
+          onClick={() => setOneToOne((v) => !v)}
+          className={`flex items-center justify-between rounded-2xl border-2 px-5 py-4 cursor-pointer select-none transition-all duration-200
+            ${oneToOne
+              ? 'border-[#0066CC] bg-blue-50'
+              : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50/30'}`}
+        >
+          <div>
+            <p className={`font-semibold text-sm ${oneToOne ? 'text-[#0066CC]' : 'text-gray-700'}`}>
+              1 trang gốc → 1 trang A4
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {oneToOne
+                ? 'Mỗi trang gốc chỉ ra đúng 1 trang A4 (phóng vừa khổ, không chia)'
+                : 'Tự động chia trang dài thành nhiều trang A4 để phóng to tối đa'}
+            </p>
+          </div>
+          {/* Toggle switch */}
+          <div className={`relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 ml-4
+            ${oneToOne ? 'bg-[#0066CC]' : 'bg-gray-300'}`}>
+            <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200
+              ${oneToOne ? 'left-5' : 'left-0.5'}`} />
+          </div>
         </div>
 
         {/* ── Process button ── */}
@@ -454,11 +660,7 @@ export default function PdfEnlarger() {
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium text-gray-700 flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-[#0066CC]" />
-                {progress < 15 ? 'Đang tải PDF…'
-                  : progress < 40 ? 'Đang render trang PDF…'
-                  : progress < 60 ? 'Phân tích khoảng trắng…'
-                  : progress < 85 ? 'Đang cắt & ghép trang…'
-                  : 'Đang tạo file PDF đầu ra…'}
+                {progressLabel || 'Đang xử lý…'}
               </span>
               <span className="font-mono text-[#0066CC] font-bold tabular-nums">{progress}%</span>
             </div>
@@ -490,22 +692,37 @@ export default function PdfEnlarger() {
           <div className="bg-white rounded-2xl border border-emerald-200 shadow-sm overflow-hidden">
             <div className="bg-emerald-50 px-5 py-4 flex items-center gap-3 border-b border-emerald-100">
               <CheckCircle2 className="w-6 h-6 text-emerald-500" />
-              <p className="font-bold text-emerald-800">Hoàn thành! PDF đã sẵn sàng tải xuống.</p>
+              <p className="font-bold text-emerald-800">Hoàn thành! PDF đã sẵn sàng.</p>
             </div>
-            <div className="p-5 space-y-4">
+            <div className="p-5 space-y-3">
+              {/* Stats */}
               <div className="grid grid-cols-3 gap-3">
                 <StatBadge icon={Layers} label="Số trang" value={`${resultPages} trang A4`} color="blue" />
                 <StatBadge icon={FileText} label="Kích thước" value={fmtSize(resultSize)} color="purple" />
                 <StatBadge icon={ScanLine} label="DPI" value={`${opts.dpi} DPI`} color="green" />
               </div>
-              <button
-                id="btn-download-enlarged"
-                onClick={handleDownload}
-                className="w-full flex items-center justify-center gap-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] py-3.5 text-base font-bold text-white transition-all duration-200 shadow-md hover:shadow-lg"
-              >
-                <Download className="w-5 h-5" />
-                Tải về PDF ({fmtSize(resultSize)})
-              </button>
+
+              {/* Quick actions */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  id="btn-download-enlarged"
+                  onClick={handleDownload}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] py-3 text-sm font-bold text-white transition-all shadow hover:shadow-lg"
+                >
+                  <Download className="w-4 h-4" />
+                  Tải về PDF
+                </button>
+                <button
+                  id="btn-toggle-grid"
+                  onClick={() => setShowPageGrid((v) => !v)}
+                  className="flex items-center justify-center gap-2 rounded-xl border-2 border-[#0066CC] text-[#0066CC] font-bold py-3 text-sm hover:bg-blue-50 transition-colors"
+                >
+                  {showPageGrid
+                    ? <><EyeOff className="w-4 h-4" />Ẩn danh sách trang</>
+                    : <><Eye className="w-4 h-4" />Xem & Chọn trang in</>}
+                </button>
+              </div>
+
               <button
                 onClick={reset}
                 className="w-full flex items-center justify-center gap-2 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
@@ -517,6 +734,29 @@ export default function PdfEnlarger() {
           </div>
         )}
 
+        {/* ── Page grid (thumbnail selector + print) ── */}
+        {showPageGrid && pageThumbs.length > 0 && (
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 space-y-3">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+              <Layers className="w-4 h-4 text-[#0066CC]" />
+              Chọn trang & In
+            </div>
+            <PageGrid
+              thumbs={pageThumbs}
+              selected={selectedPages}
+              onToggle={(i) => setSelectedPages((prev) => {
+                const next = new Set(prev);
+                next.has(i) ? next.delete(i) : next.add(i);
+                return next;
+              })}
+              onSelectAll={() => setSelectedPages(new Set(Array.from({ length: pageThumbs.length }, (_, i) => i)))}
+              onDeselectAll={() => setSelectedPages(new Set())}
+              onPrintSelected={printSelectedPages}
+              onPrintAll={printAllPages}
+            />
+          </div>
+        )}
+
         {/* ── How it works ── */}
         <div className="bg-white/70 backdrop-blur rounded-2xl border border-gray-100 p-5">
           <h2 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
@@ -524,15 +764,16 @@ export default function PdfEnlarger() {
             Cách hoạt động (toàn bộ chạy trên trình duyệt)
           </h2>
           <ol className="space-y-2 text-xs text-gray-600 list-decimal list-inside">
-            <li>Render trang PDF gốc thành ảnh {opts.dpi} DPI bằng <strong>PDF.js</strong> (không cần cài thêm gì)</li>
+            <li>Render <strong>từng trang</strong> PDF gốc thành ảnh {opts.dpi} DPI bằng <strong>PDF.js</strong></li>
             <li>Phân tích từng hàng pixel để tìm các khoảng trắng tự nhiên (giữa đoạn văn, bảng…)</li>
             <li>Chọn điểm cắt gần mốc chia đều nhất, tránh cắt ngang chữ hoặc bảng</li>
             <li>Tạo PDF nhiều trang A4, mỗi trang chứa 1 phần phóng to tối đa vừa khổ giấy</li>
-            <li>File PDF hoàn chỉnh được tạo và tải thẳng về máy — <strong>không upload lên server</strong></li>
+            <li>Xem trước ngay trên trình duyệt hoặc in trực tiếp — <strong>không upload lên server</strong></li>
           </ol>
         </div>
 
       </div>
     </div>
+  </>
   );
 }
