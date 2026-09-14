@@ -435,7 +435,7 @@ export default function PdfEnlarger() {
         file, { ...opts, pages: oneToOne ? 1 : opts.pages },
         (p, label) => { setProgress(p); setProgressLabel(label); },
       );
-      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const blob = new Blob([bytes as any], { type: 'application/pdf' });
       setResultUrl(URL.createObjectURL(blob));
       setResultPages(pageCount);
       setResultSize(blob.size);
