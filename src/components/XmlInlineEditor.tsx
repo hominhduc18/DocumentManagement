@@ -8,10 +8,10 @@
  *  - Phải: Danh sách lỗi, click để scroll + mở fix panel tại chỗ
  */
 
-import React, { useMemo, useState, useRef, useCallback, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useCallback } from 'react';
 import {
   AlertCircle, CheckCircle2, Wrench, X, ChevronRight,
-  ArrowRight, Lightbulb, CheckCheck
+  ArrowRight, Lightbulb, CheckCheck, Copy, ClipboardCheck
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────
@@ -139,12 +139,20 @@ function FixTooltip({ error, originalValue, onApply, onClose }: FixTooltipProps)
   const suggestion = generateFixSuggestion(error, originalValue);
   const isCertain = error.type === 'error';
   const [applied, setApplied] = useState(false);
+  const [copiedOrig, setCopiedOrig] = useState(false);
+  const [copiedFixed, setCopiedFixed] = useState(false);
 
   const handleApply = () => {
     if (suggestion?.fixedValue !== undefined) {
       onApply(suggestion.fixedValue);
       setApplied(true);
     }
+  };
+
+  const copyText = (text: string, which: 'orig' | 'fixed') => {
+    navigator.clipboard.writeText(text);
+    if (which === 'orig') { setCopiedOrig(true); setTimeout(() => setCopiedOrig(false), 2000); }
+    else { setCopiedFixed(true); setTimeout(() => setCopiedFixed(false), 2000); }
   };
 
   return (
@@ -172,8 +180,20 @@ function FixTooltip({ error, originalValue, onApply, onClose }: FixTooltipProps)
         {/* Original value */}
         {originalValue && (
           <span className="block">
-            <span className="text-xs text-gray-500 font-medium">Giá trị gốc:</span>
-            <code className={`block mt-1 text-xs px-2 py-1.5 rounded-lg border font-mono break-all ${isCertain ? 'bg-red-50 border-red-200 text-red-800' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>
+            <span className="flex items-center justify-between mb-1">
+              <span className="text-xs text-gray-500 font-medium">Giá trị gốc:</span>
+              <button
+                onClick={() => copyText(originalValue, 'orig')}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs transition-all ${
+                  copiedOrig
+                    ? 'bg-emerald-100 text-emerald-600 font-semibold'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-500'
+                }`}
+              >
+                {copiedOrig ? <><ClipboardCheck className="w-3 h-3" /> Đã copy!</> : <><Copy className="w-3 h-3" /> Copy</>}
+              </button>
+            </span>
+            <code className={`block text-xs px-2 py-1.5 rounded-lg border font-mono break-all ${isCertain ? 'bg-red-50 border-red-200 text-red-800' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>
               {originalValue || '(trống)'}
             </code>
           </span>
@@ -203,8 +223,20 @@ function FixTooltip({ error, originalValue, onApply, onClose }: FixTooltipProps)
               )}
               {suggestion.fixedValue !== undefined && (
                 <span className="block">
-                  <span className="text-xs text-gray-500">Sau khi sửa:</span>
-                  <code className="block mt-1 text-xs px-2 py-1.5 bg-white border border-emerald-300 rounded font-mono break-all text-emerald-800">
+                  <span className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-gray-500">Sau khi sửa:</span>
+                    <button
+                      onClick={() => copyText(suggestion.fixedValue!, 'fixed')}
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs transition-all ${
+                        copiedFixed
+                          ? 'bg-emerald-100 text-emerald-700 font-semibold'
+                          : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-600'
+                      }`}
+                    >
+                      {copiedFixed ? <><ClipboardCheck className="w-3 h-3" /> Đã copy!</> : <><Copy className="w-3 h-3" /> Copy giá trị sửa</>}
+                    </button>
+                  </span>
+                  <code className="block text-xs px-2 py-1.5 bg-white border border-emerald-300 rounded font-mono break-all text-emerald-800">
                     {suggestion.fixedValue || '(trống)'}
                   </code>
                 </span>
