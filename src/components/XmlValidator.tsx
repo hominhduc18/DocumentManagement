@@ -2,13 +2,15 @@
 
 import React, { useState } from 'react';
 import { validateEnvelopeXml, buildXml, updateXmlFieldByPath, EnvelopeValidationResult, rebuildEnvelopeXml } from '@/lib/xmlValidation';
-import { Upload, Download, CheckCircle, AlertCircle, Edit2, Save, X, FileJson } from 'lucide-react';
+import { Upload, Download, CheckCircle, AlertCircle, Edit2, Save, X, FileJson, Code, TableProperties } from 'lucide-react';
 import xmlFieldsData from '@/data/xmlFieldsData.json';
+import XmlInlineEditor, { InlineError } from '@/components/XmlInlineEditor';
 
 export default function XmlValidator() {
   const [xmlInput, setXmlInput] = useState('');
   const [envelopeResult, setEnvelopeResult] = useState<EnvelopeValidationResult | null>(null);
   const [selectedTab, setSelectedTab] = useState<number>(0);
+  const [viewMode, setViewMode] = useState<'table' | 'inline'>('table');
   
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -192,6 +194,32 @@ export default function XmlValidator() {
                 Hồ sơ tổng hợp (GIAMDINHHS)
               </span>
             )}
+
+            {/* View mode toggle */}
+            <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('table')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                  viewMode === 'table'
+                    ? 'bg-white text-[#0066CC] shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <TableProperties className="w-3.5 h-3.5" />
+                Bảng
+              </button>
+              <button
+                onClick={() => setViewMode('inline')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                  viewMode === 'inline'
+                    ? 'bg-white text-rose-600 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <Code className="w-3.5 h-3.5" />
+                XML Nổi Bật
+              </button>
+            </div>
           </div>
 
           {envelopeResult.files.length > 1 && (
@@ -217,6 +245,8 @@ export default function XmlValidator() {
 
           {currentFile && validationResult && (
             <div>
+              {viewMode === 'table' ? (
+                <>
               <div className="p-4 bg-blue-50/30 border-b border-gray-100 flex justify-between items-center">
                 <span className="font-semibold text-gray-700">Chi tiết bảng: {currentFile.loaiHoSo}</span>
                 {validationResult.xmlType && (
@@ -313,6 +343,36 @@ export default function XmlValidator() {
                 </tbody>
               </table>
               </div>
+            </>
+              ) : (
+                /* ── Inline XML Editor ── */
+                <div style={{ height: 600 }} className="flex flex-col">
+                  <XmlInlineEditor
+                    xmlText={validationResult.rawXml || ''}
+                    errors={validationResult.errors.map((e): InlineError => ({
+                      field: e.field,
+                      message: e.message,
+                      type: e.type,
+                    }))}
+                    onXmlChange={(newXml) => {
+                      // Replace the inner XML and re-validate the whole envelope
+                      if (envelopeResult?.isEnvelope && envelopeResult.parsedEnvelope) {
+                        const updatedFiles = envelopeResult.files.map((f, idx) =>
+                          idx === selectedTab
+                            ? { loaiHoSo: f.loaiHoSo, updatedRawXml: newXml }
+                            : { loaiHoSo: f.loaiHoSo, updatedRawXml: f.result.rawXml }
+                        );
+                        const newEnvelopeXml = rebuildEnvelopeXml(envelopeResult.parsedEnvelope, updatedFiles);
+                        setXmlInput(newEnvelopeXml);
+                        handleValidate(newEnvelopeXml, false);
+                      } else {
+                        setXmlInput(newXml);
+                        handleValidate(newXml, false);
+                      }
+                    }}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>

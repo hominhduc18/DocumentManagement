@@ -1,6 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { XMLParser, XMLBuilder } from 'fast-xml-parser';
+
+// ── Unicode suspicious patterns ──────────────────────────────────────────────
+const UNICODE_SUSPICIOUS: { pattern: RegExp; msg: string }[] = [
+  { pattern: /\u00D0/, msg: 'Có ký tự Ð (U+00D0) — có thể nhầm với Đ (U+0110) tiếng Việt' },
+  { pattern: /\u00F0/, msg: 'Có ký tự ð (U+00F0) — có thể nhầm với đ (U+0111) tiếng Việt' },
+  { pattern: /[\u2018\u2019]/, msg: "Có dấu nháy đơn curly (' ') — nên dùng dấu thẳng" },
+  { pattern: /[\u201C\u201D]/, msg: 'Có dấu nháy kép curly (\u201C\u201D) — nên dùng dấu thẳng' },
+  { pattern: /[\u2013\u2014]/, msg: 'Có gạch ngang typographic (\u2013/\u2014) — nên dùng dấu "-"' },
+  { pattern: /\u00A0/, msg: 'Có NBSP (U+00A0) — khoảng trắng không ngắt dòng ẩn, có thể gây lỗi so sánh' },
+  { pattern: /\u200B/, msg: 'Có zero-width space (U+200B) ẩn trong giá trị' },
+];
+
+/** Kiểm tra một chuỗi có ký tự Unicode dễ nhầm không, trả về thông báo lỗi đầu tiên tìm thấy */
+export function detectSuspiciousUnicode(value: string): string | null {
+  for (const { pattern, msg } of UNICODE_SUSPICIOUS) {
+    if (pattern.test(value)) return msg;
+  }
+  return null;
+}
 import xmlFieldsData from '../data/xmlFieldsData.json';
 
 export interface ValidationError {
@@ -120,6 +139,11 @@ export function validateSingleXml(xmlString: string, expectedType?: string): Val
                             if (strVal.length > maxLen) {
                                 errors.push({ field: key, message: `Độ dài trường ${key} vượt quá ${maxLen} ký tự`, type: 'error' });
                             }
+                        }
+                        // Kiểm tra Unicode dễ nhầm
+                        const unicodeWarn = detectSuspiciousUnicode(strVal);
+                        if (unicodeWarn) {
+                            errors.push({ field: key, message: `⚠️ Unicode: ${unicodeWarn}`, type: 'warning' });
                         }
                     }
                 }
